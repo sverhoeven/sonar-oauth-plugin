@@ -30,6 +30,7 @@ import org.sonar.api.Property;
 import org.sonar.api.config.Settings;
 import org.sonar.api.security.DefaultGroups;
 import org.sonar.api.security.ExternalGroupsProvider;
+import org.sonar.plugins.oauth.api.OAuthClient;
 
 /**
  *
@@ -44,9 +45,11 @@ public class OAuthGroupsProvider extends ExternalGroupsProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(OAuthGroupsProvider.class);
 
     private final Collection<String> adminUsers;
+    private final OAuthClient oauthClient;
 
-    public OAuthGroupsProvider(Settings settings) {
+    public OAuthGroupsProvider(Settings settings, OAuthClient oauthClient) {
         this.adminUsers = Arrays.asList(settings.getStringArray(OAuthPlugin.Settings.ADMIN_USERS));
+        this.oauthClient = oauthClient;
     }
 
     @Override
@@ -58,6 +61,11 @@ public class OAuthGroupsProvider extends ExternalGroupsProvider {
         } else {
             groups.add(DefaultGroups.USERS);
         }
+
+        groups.addAll(oauthClient.getGroups(username));
+
+        LOGGER.info("Groups of {} are {}", username, groups.toString());
+
         return groups;
     }
 

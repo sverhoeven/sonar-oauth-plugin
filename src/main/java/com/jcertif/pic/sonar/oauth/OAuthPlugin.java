@@ -71,8 +71,8 @@ public class OAuthPlugin extends SonarPlugin {
             if (isRealmEnabled()) {
                 Preconditions.checkState(settings.getBoolean(CoreProperties.CORE_AUTHENTICATOR_CREATE_USERS), "Property sonar.authenticator.createUsers must be set to true.");
                 Preconditions.checkArgument(StringUtils.isNotBlank(Settings.PROVIDER_ID), "Property is missing : " + Settings.PROVIDER_ID);
-                extensions.add(OAuthSecurityRealm.class);
                 extensions.add(getOAuthClient());
+                extensions.add(OAuthSecurityRealm.class);
                 extensions.add(OAuthAuthenticator.class);
                 extensions.add(OAuthValidationFilter.class);
                 extensions.add(OAuthAuthenticationFilter.class);

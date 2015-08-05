@@ -26,7 +26,6 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
-import org.sonar.api.security.UserDetails;
 import org.sonar.api.web.ServletFilter;
 import org.sonar.plugins.oauth.api.OAuthClient;
 

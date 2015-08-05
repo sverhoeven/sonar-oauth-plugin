@@ -24,6 +24,7 @@ import org.sonar.api.security.Authenticator;
 import org.sonar.api.security.ExternalGroupsProvider;
 import org.sonar.api.security.ExternalUsersProvider;
 import org.sonar.api.security.SecurityRealm;
+import org.sonar.plugins.oauth.api.OAuthClient;
 
 /**
  *
@@ -34,9 +35,11 @@ public class OAuthSecurityRealm extends SecurityRealm {
 
     public static final String NAME = "oauth";
     private final Settings settings;
+    private final OAuthClient oauthclient;
 
-    public OAuthSecurityRealm(Settings settings) {
+    public OAuthSecurityRealm(Settings settings, OAuthClient oauthclient) {
         this.settings = settings;
+        this.oauthclient = oauthclient;
     }
 
     @Override
@@ -51,7 +54,7 @@ public class OAuthSecurityRealm extends SecurityRealm {
 
     @Override
     public ExternalGroupsProvider getGroupsProvider() {
-        return new OAuthGroupsProvider(settings);
+        return new OAuthGroupsProvider(settings, oauthclient);
     }
 
     @Override

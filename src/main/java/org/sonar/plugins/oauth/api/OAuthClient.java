@@ -19,15 +19,14 @@
  */
 package org.sonar.plugins.oauth.api;
 
-import com.jcertif.pic.sonar.oauth.OAuthPlugin;
-import com.jcertif.pic.sonar.oauth.OAuthQueryParams;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-import com.jcertif.pic.sonar.oauth.OAuthUserDetails;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -41,6 +40,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.ServerExtension;
 import org.sonar.api.config.Settings;
+
+import com.google.common.collect.Sets;
+import com.jcertif.pic.sonar.oauth.OAuthPlugin;
+import com.jcertif.pic.sonar.oauth.OAuthQueryParams;
+import com.jcertif.pic.sonar.oauth.OAuthUserDetails;
 
 /**
  *
@@ -57,6 +61,8 @@ public abstract class OAuthClient implements ServerExtension {
 
     public abstract OAuthUserDetails buildUser(JSONObject jsonObject);
 
+    public abstract Collection<String> fetchGroups(String accessToken);
+
     public abstract String getAccessTokenMethod();
 
     public abstract Request createAuthenticationRequest();
@@ -64,9 +70,11 @@ public abstract class OAuthClient implements ServerExtension {
     public abstract Request createAccessTokenRequest();
     
     protected Settings settings;
+    protected Map<String, Collection<String>> groupMappings;
 
     public OAuthClient(Settings settings) {
         this.settings = settings;
+        this.groupMappings = new ConcurrentHashMap<String, Collection<String>>(10);
     }
 
     public String getSonarServerUrl() {
@@ -103,6 +111,7 @@ public abstract class OAuthClient implements ServerExtension {
         if (userInfoUrl != null && accessToken != null) {
             JSONObject jsonObject = doGet(userInfoUrl, "access_token=" + accessToken);
             user = buildUser(jsonObject);
+            groupMappings.put(user.getLogin(), fetchGroups(accessToken));
         }
         return user;
     }
@@ -219,5 +228,13 @@ public abstract class OAuthClient implements ServerExtension {
             public static final String POST = "POST";
             public static final String DELETE = "DELETE";
         }
+    }
+
+    public Collection<String> getGroups(String username) {
+        Collection<String> groups = Sets.newHashSet();
+        if (groupMappings.containsKey(username)) {
+            groups = groupMappings.get(username);
+        }
+        return groups;
     }
 }

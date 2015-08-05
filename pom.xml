@@ -118,6 +118,12 @@
             <version>4.10</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+    <groupId>org.kohsuke</groupId>
+    <artifactId>github-api</artifactId>
+    <version>1.69</version>
+</dependency>
+
     </dependencies>
 
     <build>

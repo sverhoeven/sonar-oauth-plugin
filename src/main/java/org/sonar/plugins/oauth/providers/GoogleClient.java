@@ -19,16 +19,19 @@
  */
 package org.sonar.plugins.oauth.providers;
 
-import com.google.common.base.Preconditions;
-import com.jcertif.pic.sonar.oauth.OAuthQueryParams;
-import com.jcertif.pic.sonar.oauth.OAuthUserDetails;
+import java.util.Collection;
+import java.util.Set;
+
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
 import org.sonar.api.Properties;
 import org.sonar.api.Property;
-import org.sonar.api.security.UserDetails;
 import org.sonar.plugins.oauth.api.OAuthClient;
-import org.sonar.plugins.oauth.api.OAuthClient.Request;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
+import com.jcertif.pic.sonar.oauth.OAuthQueryParams;
+import com.jcertif.pic.sonar.oauth.OAuthUserDetails;
 
 /**
  *
@@ -112,6 +115,13 @@ public class GoogleClient extends OAuthClient {
                 .withRedirectUri(getSonarServerUrl() + "/oauth/validate")
                 .withGrantType("authorization_code")
                 .build());
+    }
+
+    @Override
+    public Collection<String> fetchGroups(String accessToken) {
+        Set<String> groups = Sets.newHashSet();
+        // TODO use Plus Circles as groups
+        return groups;
     }
 
     public static final class Settings {

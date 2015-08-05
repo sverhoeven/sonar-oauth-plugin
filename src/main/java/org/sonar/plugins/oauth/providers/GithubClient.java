@@ -19,16 +19,23 @@
  */
 package org.sonar.plugins.oauth.providers;
 
-import com.google.common.base.Preconditions;
-import com.jcertif.pic.sonar.oauth.OAuthQueryParams;
-import com.jcertif.pic.sonar.oauth.OAuthUserDetails;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
+import org.kohsuke.github.GHTeam;
+import org.kohsuke.github.GitHub;
 import org.sonar.api.Properties;
 import org.sonar.api.Property;
-import org.sonar.api.security.UserDetails;
 import org.sonar.plugins.oauth.api.OAuthClient;
-import org.sonar.plugins.oauth.api.OAuthClient.Request;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
+import com.jcertif.pic.sonar.oauth.OAuthQueryParams;
+import com.jcertif.pic.sonar.oauth.OAuthUserDetails;
 
 /**
  *
@@ -41,7 +48,7 @@ import org.sonar.plugins.oauth.api.OAuthClient.Request;
     @Property(key = GithubClient.Settings.ACCESS_TOKEN_METHOD, name = "Access Token HTTP Method", defaultValue = "GET"),
     @Property(key = GithubClient.Settings.CLIENT_ID, name = "Client ID"),
     @Property(key = GithubClient.Settings.CLIENT_SECRET, name = "Client Secret"),
-    @Property(key = GithubClient.Settings.SCOPE, name = "Scope", defaultValue = "user:email"),
+    @Property(key = GithubClient.Settings.SCOPE, name = "Scope", defaultValue = "read:org,user:email"),
     @Property(key = GithubClient.Settings.USER_INFO_URL, name = "User Information URL", defaultValue = "https://api.github.com/user")
 })
 public class GithubClient extends OAuthClient {
@@ -103,15 +110,38 @@ public class GithubClient extends OAuthClient {
     @Override
     public OAuthUserDetails buildUser(JSONObject jsonObject) {
         String login = jsonObject.getString("login");
-        String name = jsonObject.getString("name");
+        String name = jsonObject.optString("name");
         if (StringUtils.isBlank(name)) {
             name = login;
         }
         return OAuthUserDetails.builder()
                 .login(login)
                 .name(name)
-                .email(jsonObject.getString("email"))
+                .email(jsonObject.optString("email", "no-reply@example.com"))
                 .build();
+    }
+
+    @Override
+    public Collection<String> fetchGroups(String accessToken) {
+        Set<String> groups = Sets.newHashSet();
+        // Can't use doGet from super as it returns object and Gitub api returns an array
+        try {
+            GitHub github = GitHub.connectUsingOAuth(accessToken);
+            Map<String, Set<GHTeam>> teams = github.getMyTeams();
+            for (Map.Entry<String, Set<GHTeam>> entry : teams.entrySet()) {
+                // add organization to groups
+                groups.add(entry.getKey());
+                for (GHTeam team: entry.getValue()) {
+                    // add organization-team to groups
+                    String group = entry.getKey() + '*' + team.getName();
+                    groups.add(group);
+                }
+            }
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return groups;
     }
 
     public static final class Settings {
